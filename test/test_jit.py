@@ -11188,6 +11188,23 @@ dedent """
             return a, x
         self.checkScript(return_tuple, (torch.rand(4),))
 
+    def test_add_tuple_slice(self):
+        def foo(input: Tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]):
+            changed_input = input[0] + 1
+            return (changed_input,) + input[1:]
+        inp1: Tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]] = (torch.rand(4),)
+        inp2: Tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]] = (torch.rand(4), torch.rand(2))
+        self.checkScript(foo, (inp1,))
+        self.checkScript(foo, (inp2,))
+
+    def test_add_tuple_slice_non_optional(self):
+        def foo(input: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]):
+            changed_input = input[0] + 1
+            return (changed_input,) + input[1:]
+        inp: Tuple[torch.Tensor, torch.Tensor, torch.Tensor] = (torch.rand(4), torch.rand(4), torch.rand(4))
+        shit = torch.jit.script(foo)
+        self.checkScript(foo, (inp,))
+
     def test_method_no_self(self):
         with self.assertRaisesRegex(RuntimeError, 'methods must have a self argument'):
             class MethodNoSelf(torch.jit.ScriptModule):

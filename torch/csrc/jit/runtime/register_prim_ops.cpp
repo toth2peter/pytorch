@@ -596,6 +596,11 @@ RegisterOperators reg(
          listAdd,
          aliasAnalysisFromSchema()),
      OperatorGenerator(
+         TORCH_SELECTIVE_SCHEMA(
+             "aten::add.tuple(AnyTupleType a, AnyTupleType b) -> AnyTupleType"),
+         tupleAdd,
+         aliasAnalysisFromSchema()),
+     OperatorGenerator(
          TORCH_SELECTIVE_SCHEMA("aten::add_.t(t[](a!) self, t[] b) -> t[]"),
          listInplaceAdd,
          aliasAnalysisFromSchema()),
