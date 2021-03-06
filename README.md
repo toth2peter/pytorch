@@ -326,9 +326,42 @@ should increase shared memory size either with `--ipc=host` or `--shm-size` comm
 The `Dockerfile` is supplied to build images with Cuda support and cuDNN v7.
 You can pass `PYTHON_VERSION=x.y` make variable to specify which Python version is to be used by Miniconda, or leave it
 unset to use the default.
+
+You'll need to have [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker) installed on your system.
+
+**SET the correct versions:**
+
+Last CUDA version for compute capability 3.0: CUDA10.1. ([Source](https://discuss.pytorch.org/t/pre-built-pytorch-for-cuda-compute-capability-3-0-on-windows/51263))
+
+To be modified in `Dockerfile`:
+ - `TORCH_CUDA_ARCH_LIST="3.0"`
+ - /opt/conda/bin/conda install -y python=${PYTHON_VERSION} conda-build pyyaml numpy **typing_extensions** ipython&& \
+ - `ARG CUDA_VERSION=10.1`
+
+To be modified in `docker.Makefile`:
+ - `CUDA_VERSION              = 10.1`
+
+**BUILD THE IMAGE:**
+
 ```bash
 make -f docker.Makefile
 # images are tagged as docker.io/${your_docker_username}/pytorch
+```
+**TEST the build:**
+
+To test the build ([Credit](https://stackoverflow.com/questions/60513896/pytorch-sort-median-on-gpu-as-slow-as-numpy-on-cpu-am-i-missing-something)):
+
+```
+docker run --gpus all --rm -ti --ipc=host docker.io/peter2toth/pytorch:v1.8.0-rc1-773-ga0d1e701db-devel
+python3
+import numpy as np
+import torch as th
+c=np.random.rand(3,480,700).astype(np.float32) # cpu version
+g=th.tensor(c).to(device='cuda:0')             # gpu version
+np.median(c,axis=0)
+np.sort(c,axis=0)[1]
+th.median(g,dim=0).values
+th.sort(g,dim=0).values[1]
 ```
 
 ### Building the Documentation
